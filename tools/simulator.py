@@ -322,6 +322,15 @@ def make_client(state):
                 if c.is_connected():
                     c.publish(full_topic("sensors/status"), 
                               json.dumps(state.sensors_status_payload()))
+
+        elif topic == "config":
+            # Mirror the firmware acknowledgement for configuration commands. The simulator
+            # already subscribes to cmd/#, but previously consumed cmd/config without replying,
+            # so an end-to-end configuration transaction could prove only the backend publish.
+            res = {"config": "updated_and_saved"}
+            state.mqtt_out.append((full_topic("status"), json.dumps(res)))
+            if c.is_connected():
+                c.publish(full_topic("status"), json.dumps(res))
         
         elif topic == "tank":
             action = payload.get("action", "")
