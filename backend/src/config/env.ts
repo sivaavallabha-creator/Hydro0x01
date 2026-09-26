@@ -3,6 +3,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   MQTT_BROKER: z.string(),
   MQTT_PORT: z.string().optional(),
+  MQTT_CLIENT_ID: z.string().optional(),
   MQTT_USER: z.string().optional(),
   MQTT_PASSWORD: z.string().optional(),
   MQTT_BASE_TOPIC: z.string().default('HydroponicOne'),
@@ -34,6 +35,7 @@ export function validateEnv() {
   return {
     MQTT_BROKER: env.MQTT_BROKER,
     MQTT_PORT: parseInt(env.MQTT_PORT || '8883', 10),
+    MQTT_CLIENT_ID: env.MQTT_CLIENT_ID,
     MQTT_USER: env.MQTT_USER,
     MQTT_PASSWORD: env.MQTT_PASSWORD,
     MQTT_BASE_TOPIC: env.MQTT_BASE_TOPIC,
