@@ -3,7 +3,7 @@ import { useTelemetryStore } from '../../store/useTelemetryStore';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from 'recharts';
-import { Thermometer, Droplets, Wind, Gauge, Sun, Fan } from 'lucide-react';
+import { Thermometer, Wind, Gauge, Sun, Fan } from 'lucide-react';
 import { request } from '../../services/api';
 import { useSystemStore } from '../../store/useSystemStore';
 import { toast } from 'sonner';

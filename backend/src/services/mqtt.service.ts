@@ -56,7 +56,10 @@ export async function initMqtt() {
   if (client) return client
 
   const url = `mqtts://${env.MQTT_BROKER}:${env.MQTT_PORT}`
-  const clientId = `hydro-api-${Math.random().toString(16).slice(2, 10)}`
+  // A persistent MQTT session must reconnect with the same client identity. A random value
+  // made clean:false and sessionExpiryInterval ineffective and made publisher attribution
+  // impossible to bind into deployment approval.
+  const clientId = env.MQTT_CLIENT_ID ?? 'hydro-api'
 
   logger.info({ url, clientId }, 'REFACTORED MQTT SERVICE VERSION 2.1 - STARTING')
 

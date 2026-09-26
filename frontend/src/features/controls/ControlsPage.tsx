@@ -6,8 +6,6 @@ import {
   Power, Fan, Sun, Droplets, Settings2, Loader2,
 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
 export default function ControlsPage() {
   const { selectedDevice, status } = useSystemStore();
   const [loading, setLoading] = useState<string | null>(null);
@@ -24,24 +22,6 @@ export default function ControlsPage() {
     } finally {
       setLoading(null);
     }
-  };
-
-  const envCommand = async (action: string) => {
-    const res = await fetch(`${API_BASE}/api/control/pump`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId: selectedDevice, action }),
-    });
-    if (!res.ok) throw new Error('Command failed');
-    return res.json();
-  };
-
-  const sendEnvMqtt = async (action: string) => {
-    // Environment commands use the same MQTT topic pattern
-    // For now, the backend doesn't have dedicated env control routes,
-    // so we use the pump route as a proxy or extend later.
-    // This is a placeholder that matches the existing backend.
-    toast.info(`Environment command: ${action} sent to ${selectedDevice}`);
   };
 
   return (
