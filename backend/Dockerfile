@@ -10,7 +10,7 @@ RUN npm ci
 
 # Generate Prisma Client & Build TypeScript
 COPY . .
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" npx prisma generate
 RUN npm run build
 
 # ===== PRODUCTION STAGE =====
@@ -20,16 +20,17 @@ WORKDIR /app
 
 # Copy production dependencies and built files
 COPY package*.json ./
-RUN npm ci --omit=dev
+COPY --from=builder /app/node_modules ./node_modules
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 
 # Create start script that runs migrations before starting
 RUN echo '#!/bin/sh' > /app/start.sh
 RUN echo 'npx prisma db push' >> /app/start.sh
-RUN echo 'npm start' >> /app/start.sh
+RUN echo 'node dist/server.js' >> /app/start.sh
 RUN chmod +x /app/start.sh
 
 EXPOSE 3000
