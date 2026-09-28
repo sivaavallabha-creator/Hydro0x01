@@ -27,6 +27,7 @@ Requires:
 import argparse
 import json
 import math
+import os
 import random
 import sys
 import time
@@ -256,12 +257,11 @@ def full_topic(suffix):
     return f"{BASE_TOPIC}/{DEVICE_NAME}/{suffix}"
 
 
-def make_client(state):
+def make_client(state, client_id):
     if not MQTT_AVAILABLE:
         return None
 
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,
-                         client_id=f"HydroponicOne-Sim-{random.randint(1000,9999)}")
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
 
     def on_connect(c, userdata, flags, rc, props=None):
         if rc == 0:
@@ -524,6 +524,19 @@ def render(s, connected, broker):
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
+class _HeadlessLive:
+    """The small subset of Rich Live used by the simulator's main loop."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+    def update(self, _):
+        pass
+
+
 def publish_loop(state, client, no_mqtt, broker):
     connected = False
 
@@ -541,13 +554,18 @@ def publish_loop(state, client, no_mqtt, broker):
 
 def main():
     parser = argparse.ArgumentParser(description="HydroponicOne ESP32 node simulator")
-    parser.add_argument("--broker",   default="localhost:1883", help="MQTT broker host[:port]")
+    default_broker = (f"{os.environ.get('MQTT_BROKER', 'localhost')}:"
+                      f"{os.environ.get('MQTT_PORT', '1883')}")
+    parser.add_argument("--broker",   default=default_broker, help="MQTT broker host[:port]")
+    parser.add_argument("--client-id", default=os.environ.get("MQTT_CLIENT_ID", "HydroNode_01"),
+                        help="stable MQTT client identity")
     parser.add_argument("--no-mqtt",  action="store_true",      help="run without MQTT (offline demo)")
+    parser.add_argument("--headless", action="store_true", help="run without the interactive terminal UI")
     parser.add_argument("--speed",    type=float, default=1.0,  help="sim speed multiplier")
     args = parser.parse_args()
 
     state  = SystemState()
-    client = None if (args.no_mqtt or not MQTT_AVAILABLE) else make_client(state)
+    client = None if (args.no_mqtt or not MQTT_AVAILABLE) else make_client(state, args.client_id)
     connected = publish_loop(state, client, args.no_mqtt, args.broker)
 
     console = Console()
@@ -585,8 +603,10 @@ def main():
         "6": ("level",   -1.0,  "Low water injected"),
     }
 
-    with Live(render(state, connected, args.broker),
-              console=console, refresh_per_second=4, screen=True) as live:
+    live_context = (_HeadlessLive() if args.headless else
+                    Live(render(state, connected, args.broker),
+                         console=console, refresh_per_second=4, screen=True))
+    with live_context as live:
         while True:
             now = time.time()
 
@@ -634,7 +654,7 @@ def main():
                     state.mqtt_out = state.mqtt_out[-60:]
 
             # Keyboard
-            key = getch_noblock()
+            key = None if args.headless else getch_noblock()
             if key:
                 if key == "q":
                     break
