@@ -29,6 +29,7 @@ import json
 import math
 import os
 import random
+import ssl
 import sys
 import time
 import threading
@@ -257,11 +258,17 @@ def full_topic(suffix):
     return f"{BASE_TOPIC}/{DEVICE_NAME}/{suffix}"
 
 
-def make_client(state, client_id):
+def make_client(state, client_id, use_tls=False):
     if not MQTT_AVAILABLE:
         return None
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
+    if use_tls:
+        # The local commissioning ingress uses a deployment-scoped certificate. CipherWeave
+        # authenticates and records that endpoint as part of the approved route; the simulator
+        # only needs TLS transport so it behaves like the real firmware on that local ingress.
+        client.tls_set(cert_reqs=ssl.CERT_NONE)
+        client.tls_insecure_set(True)
 
     def on_connect(c, userdata, flags, rc, props=None):
         if rc == 0:
@@ -559,13 +566,17 @@ def main():
     parser.add_argument("--broker",   default=default_broker, help="MQTT broker host[:port]")
     parser.add_argument("--client-id", default=os.environ.get("MQTT_CLIENT_ID", "HydroNode_01"),
                         help="stable MQTT client identity")
+    parser.add_argument("--tls", action="store_true",
+                        default=os.environ.get("MQTT_TLS", "").lower() in {"1", "true", "yes"},
+                        help="connect to the MQTT endpoint using TLS")
     parser.add_argument("--no-mqtt",  action="store_true",      help="run without MQTT (offline demo)")
     parser.add_argument("--headless", action="store_true", help="run without the interactive terminal UI")
     parser.add_argument("--speed",    type=float, default=1.0,  help="sim speed multiplier")
     args = parser.parse_args()
 
     state  = SystemState()
-    client = None if (args.no_mqtt or not MQTT_AVAILABLE) else make_client(state, args.client_id)
+    client = (None if (args.no_mqtt or not MQTT_AVAILABLE)
+              else make_client(state, args.client_id, args.tls))
     connected = publish_loop(state, client, args.no_mqtt, args.broker)
 
     console = Console()
