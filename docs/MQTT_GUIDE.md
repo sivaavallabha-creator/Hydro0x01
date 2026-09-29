@@ -23,6 +23,7 @@ The following topics are used by the device to publish sensor data and health me
 | `sensors/water/level_litres` | `Float` | Calculated water volume in Litres. |
 | `power/battery` | `Float` | Battery voltage (V). |
 | `status` | `JSON` | Device health snapshot (RSSI, Heap, Uptime). |
+| `ack/config` | `{"config":"updated_and_saved"}` | Reply emitted only after a `cmd/config` command is processed. |
 | `sensors` | `JSON` | Optional summary payload containing all sensor data. |
 | `heartbeat` | `String` | Timestamp/Uptime pulse sent every 60s. |
 

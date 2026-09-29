@@ -334,10 +334,12 @@ def make_client(state, client_id, use_tls=False):
             # Mirror the firmware acknowledgement for configuration commands. The simulator
             # already subscribes to cmd/#, but previously consumed cmd/config without replying,
             # so an end-to-end configuration transaction could prove only the backend publish.
+            # Use a command-specific acknowledgement topic: `status` is periodic telemetry, and
+            # sharing it made an idle status update indistinguishable from this transaction.
             res = {"config": "updated_and_saved"}
-            state.mqtt_out.append((full_topic("status"), json.dumps(res)))
+            state.mqtt_out.append((full_topic("ack/config"), json.dumps(res)))
             if c.is_connected():
-                c.publish(full_topic("status"), json.dumps(res))
+                c.publish(full_topic("ack/config"), json.dumps(res))
         
         elif topic == "tank":
             action = payload.get("action", "")
