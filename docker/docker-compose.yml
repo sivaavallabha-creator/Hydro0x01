@@ -81,6 +81,9 @@ services:
       - MQTT_PORT=1883
       - MQTT_CLIENT_ID=HydroNode_01
       - MQTT_TLS=true
+    labels:
+      io.cipherweave.verification.mqtt-client-id: HydroNode_01
+      io.cipherweave.verification.reply-topic: HydroponicOne/HydroNode_01/ack/config
     command: ["--headless"]
 
   frontend:
