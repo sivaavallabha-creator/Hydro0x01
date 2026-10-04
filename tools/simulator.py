@@ -336,7 +336,8 @@ def make_client(state, client_id, use_tls=False):
             # so an end-to-end configuration transaction could prove only the backend publish.
             # Use a command-specific acknowledgement topic: `status` is periodic telemetry, and
             # sharing it made an idle status update indistinguishable from this transaction.
-            res = {"config": "updated_and_saved"}
+            res = {"config": "updated_and_saved",
+                   "transactionId": payload.get("transactionId")}
             state.mqtt_out.append((full_topic("ack/config"), json.dumps(res)))
             if c.is_connected():
                 c.publish(full_topic("ack/config"), json.dumps(res))

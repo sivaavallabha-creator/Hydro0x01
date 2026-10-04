@@ -495,7 +495,14 @@ void handleMQTTMessage(const char* topic, const char* payload) {
         if (changed) {
             validateConfiguration(); // Check the NEW values immediately
             //saveConfiguration();  (saveConfiguration is called inside validateConfiguration if adjusted)
-            mqttMgr.publish(TOPIC_STATUS, "{\"config\":\"updated_and_saved\"}");
+            JsonDocument reply;
+            reply["config"] = "updated_and_saved";
+            if (doc.containsKey("transactionId")) {
+                reply["transactionId"] = doc["transactionId"];
+            }
+            String replyPayload;
+            serializeJson(reply, replyPayload);
+            mqttMgr.publish(TOPIC_STATUS, replyPayload);
         }
     }
 

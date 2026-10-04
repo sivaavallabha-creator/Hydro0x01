@@ -85,10 +85,11 @@ export async function configRoutes(fastify: FastifyInstance) {
         telegram_chatId: z.string().nullable().optional(),
         discord_enabled: z.boolean().optional(),
         discord_webhookUrl: z.string().nullable().optional(),
+        transactionId: z.string().min(1),
       }),
     },
   }, async (request, reply) => {
-    const { deviceId, allDevices, ...payload } = request.body;
+    const { deviceId, allDevices, transactionId, ...payload } = request.body;
     const targetName = deviceId || "__global__";
 
     // 1. Persist to Database (Unique per device OR global)
@@ -99,7 +100,7 @@ export async function configRoutes(fastify: FastifyInstance) {
     });
 
     // 2. Build PARTIAL Firmware MQTT payload (Only include what changed)
-    const firmwareConfigPayload: Record<string, any> = {};
+    const firmwareConfigPayload: Record<string, any> = { transactionId };
     const mapping: Record<string, string> = {
       deepSleepEnabled: 'sleep_en',
       sleepDurationSec: 'sleep_sec',
